@@ -1,8 +1,8 @@
 from Robot import *
 from World import *
-from Visualization import *
 
 
 if __name__ == '__main__':
-    vis = Visualization((25, 10), 60)
+    robots = [Robot([1, 2], (9, 9), -1, 10)]
+    vis = World((11, 11), 60, robots)
     vis.run()

@@ -9,9 +9,10 @@ class Robot:
 
         self.target_position = target_position
         self.battery_charge = battery_charge
-        self.start_position = start_position
+        self.position = start_position
         self.max_speed = max_speed
 
     def step(self, current_position: np.array, camera_image: Image):
-        pass
+        print(camera_image)
+        return (1, 0)
 
