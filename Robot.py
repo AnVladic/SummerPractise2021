@@ -8,42 +8,61 @@ class Robot:
         if battery_charge == -1:
             battery_charge = float("inf")
 
-        self.target_position = target_position
+        self.target_position = tuple(target_position)
         self.battery_charge = battery_charge
         self.position = np.array(start_position)
         self.max_speed = max_speed
+        self.blind_search_mode = True
 
         self.yet_to_visit = deque()
         self.visited = set()
-        self.visible = set()
+        self.visible = dict()
 
         self.move = np.array([[-1, 0], [0, -1], [1, 0], [0, 1]])
 
+        self.bfs_way = deque()
+
     def step(self, current_position: np.array, camera_image: Image):
-        current_position = np.array(current_position)
-        camera_image = np.array(camera_image)
-        for x in range(-(camera_image.shape[0] // 2), camera_image.shape[0] // 2 + 1):
-            for y in range(-(camera_image.shape[1] // 2), camera_image.shape[1] // 2 + 1):
-                self.visible.add((current_position[0] + x, current_position[1] + y))
-        self.visited.add(tuple(current_position))
+        current_position = tuple(current_position)
+        half_camera_shape = (camera_image.shape[0] // 2, camera_image.shape[1] // 2)
+        for x in range(-half_camera_shape[0], half_camera_shape[0] + 1):
+            for y in range(-half_camera_shape[1], half_camera_shape[1] + 1):
+                self.visible[(current_position[0] + x, current_position[1] + y)] \
+                    = camera_image[y + half_camera_shape[1], x + half_camera_shape[0]]
+        self.visited.add(current_position)
         try:
             self.yet_to_visit.remove(current_position)
         except ValueError:
             pass
 
-        direction = np.array([1, 0])
-
         for vector in self.move:
             child = tuple(current_position + vector)
             if camera_image[vector[1] + 1][vector[0] + 1] == 0 and child not in self.visited:
-                self.yet_to_visit.append(np.array(child))
+                self.yet_to_visit.append(child)
 
-        if camera_image[direction[1] + 1][direction[0] + 1] == 1 or tuple(current_position + direction) in self.visited:
-            pos = self.yet_to_visit.pop()
-            #print(current_position, self.bfs(tuple(pos), tuple(current_position)))
-            direction = np.array(pos) - current_position
+        if self.target_position == current_position:
+            return 0, 0
+
+        if self.blind_search_mode or len(self.bfs_way) == 0:
+            self.blind_search_mode = True
+            direction = self.blind_search(current_position, camera_image)
+        else:
+            direction = self.bfs_step(current_position)
 
         return direction
+
+    def blind_search(self, current_position, camera_image):
+        direction = np.array([1, 0])
+        if camera_image[direction[1] + 1][direction[0] + 1] == 1 or tuple(current_position + direction) in self.visited:
+            pos = self.yet_to_visit.pop()
+            self.bfs_way = deque( self.bfs(tuple(pos), tuple(current_position))[1:] )
+            if len(self.bfs_way) > 0:
+                direction = self.bfs_step(current_position)
+        return direction
+
+    def bfs_step(self, current_position):
+        target_position = np.array(self.bfs_way.popleft())
+        return target_position - current_position
 
     def bfs(self, start, goal):
         queue = deque([start])
@@ -67,5 +86,10 @@ class Robot:
         return path
 
     def get_next_nodes(self, pos):
-        return [(pos[0] + dx, pos[1] + dy) for dx, dy in self.move if (pos[0] + dx, pos[1] + dy) in self.visible]
+        next_nodes = []
+        for dx, dy in self.move:
+            node = (pos[0] + dx, pos[1] + dy)
+            if node in self.visible and self.visible[node] == 0:
+                next_nodes.append(node)
+        return next_nodes
 

@@ -36,7 +36,10 @@ class World:
             for robot in self.robots:
                 # draw BFS work
                 for x, y in robot.visible:
-                    pg.draw.rect(self.sc, pg.Color('forestgreen'), self.get_rect(x, y))
+                    color = 'forestgreen'
+                    if robot.visible[(x, y)] == 1:
+                        color = 'red'
+                    pg.draw.rect(self.sc, pg.Color(color), self.get_rect(x, y))
 
                 # draw way
                 [pg.draw.rect(self.sc, pg.Color('LIGHTGREEN'), self.get_rect(x, y)) for x, y in self.way]
@@ -49,6 +52,10 @@ class World:
                 self.direction = robot.step(robot.position,
                                             self.get_camera_view(robot.position, self.camera_view_radius))
 
+                pg.draw.rect(self.sc, pg.Color('PURPLE'),
+                             self.get_rect(robot.target_position[0], robot.target_position[1]),
+                             border_radius=self.tile // 5)
+
             # draw grid
             [[pg.draw.rect(self.sc, pg.Color('darkorange'), self.get_rect(x, y), border_radius=self.tile // 5)
               for x, col in enumerate(row) if col] for y, row in enumerate(self.grid)]
@@ -57,7 +64,7 @@ class World:
             # pygame necessary lines
             [exit() for event in pg.event.get() if event.type == pg.QUIT]
             pg.display.flip()
-            self.clock.tick(3)
+            self.clock.tick(7)
         pg.quit()
 
     def get_rect(self, x, y):
