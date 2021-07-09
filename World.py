@@ -80,6 +80,9 @@ class World:
         return border
 
     def get_camera_view(self, position, camera_radius):
-        view_grid = self.grid[position[1] - camera_radius:position[1] + camera_radius + 1,
-                              position[0] - camera_radius:position[0] + camera_radius + 1]
+
+        grid = np.ones((self.grid.shape[0] + camera_radius * 2, self.grid.shape[1] + camera_radius * 2))
+        grid[camera_radius:camera_radius+self.grid.shape[0], camera_radius:camera_radius+self.grid.shape[1]] = self.grid
+        view_grid = grid[position[1]:position[1] + camera_radius * 2 + 1,
+                         position[0]:position[0] + camera_radius * 2 + 1]
         return view_grid

@@ -43,7 +43,8 @@ class Robot:
         self.calibrate_move()
         for vector in self.move:
             child = tuple(current_position + np.array(vector))
-            if camera_image[vector[1] + 1][vector[0] + 1] == 0 and child not in self.visited:
+            if camera_image[vector[1] + half_camera_shape[0]][vector[0] + half_camera_shape[1]] == 0 \
+                    and child not in self.visited:
                 self.yet_to_visit.append(child)
 
         if self.target_position == current_position:
@@ -51,13 +52,13 @@ class Robot:
 
         if self.blind_search_mode or len(self.bfs_way) == 0:
             self.blind_search_mode = True
-            direction = self.blind_search(current_position, camera_image)
+            direction = self.blind_search(current_position)
         else:
             direction = self.bfs_step(current_position)
 
         return direction
 
-    def blind_search(self, current_position, camera_image):
+    def blind_search(self, current_position):
         direction = np.array(self.move[-1])
         pos = self.yet_to_visit.pop()
         self.bfs_way = deque( self.bfs(tuple(pos), tuple(current_position))[1:] )
