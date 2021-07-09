@@ -4,6 +4,11 @@ from collections import deque
 
 
 class Robot:
+    right = (1, 0)
+    left = (-1, 0)
+    up = (0, -1)
+    down = (0, 1)
+
     def __init__(self, start_position: np.array, target_position: np.array, battery_charge: float, max_speed: float):
         if battery_charge == -1:
             battery_charge = float("inf")
@@ -18,7 +23,7 @@ class Robot:
         self.visited = set()
         self.visible = dict()
 
-        self.move = np.array([[-1, 0], [0, -1], [1, 0], [0, 1]])
+        self.move = [[-1, 0], [0, -1], [1, 0], [0, 1]]
 
         self.bfs_way = deque()
 
@@ -35,8 +40,9 @@ class Robot:
         except ValueError:
             pass
 
+        self.calibrate_move()
         for vector in self.move:
-            child = tuple(current_position + vector)
+            child = tuple(current_position + np.array(vector))
             if camera_image[vector[1] + 1][vector[0] + 1] == 0 and child not in self.visited:
                 self.yet_to_visit.append(child)
 
@@ -52,17 +58,24 @@ class Robot:
         return direction
 
     def blind_search(self, current_position, camera_image):
-        direction = np.array([1, 0])
-        if camera_image[direction[1] + 1][direction[0] + 1] == 1 or tuple(current_position + direction) in self.visited:
-            pos = self.yet_to_visit.pop()
-            self.bfs_way = deque( self.bfs(tuple(pos), tuple(current_position))[1:] )
-            if len(self.bfs_way) > 0:
-                direction = self.bfs_step(current_position)
+        direction = np.array(self.move[-1])
+        pos = self.yet_to_visit.pop()
+        self.bfs_way = deque( self.bfs(tuple(pos), tuple(current_position))[1:] )
+        if len(self.bfs_way) > 0:
+            direction = self.bfs_step(current_position)
+            self.blind_search_mode = False
         return direction
 
     def bfs_step(self, current_position):
         target_position = np.array(self.bfs_way.popleft())
         return target_position - current_position
+
+    def calibrate_move(self):
+        # if current_position[1] > self.target_position[1]:
+        #    self.move = (Robot.left, Robot.down, Robot.right, Robot.up)
+        # else:
+        #    self.move = (Robot.left, Robot.up, Robot.right, Robot.down)
+        pass
 
     def bfs(self, start, goal):
         queue = deque([start])
