@@ -40,14 +40,15 @@ class Robot:
         except ValueError:
             pass
 
-        self.calibrate_move()
+        self.calibrate_move(current_position)
         for vector in self.move:
             child = tuple(current_position + np.array(vector))
             if camera_image[vector[1] + half_camera_shape[0]][vector[0] + half_camera_shape[1]] == 0 \
                     and child not in self.visited:
                 self.yet_to_visit.append(child)
 
-        if self.target_position == current_position:
+        if self.target_position == current_position or len(self.yet_to_visit) == 0:
+            print('end')
             return 0, 0
 
         if self.blind_search_mode or len(self.bfs_way) == 0:
@@ -71,12 +72,23 @@ class Robot:
         target_position = np.array(self.bfs_way.popleft())
         return target_position - current_position
 
-    def calibrate_move(self):
-        # if current_position[1] > self.target_position[1]:
-        #    self.move = (Robot.left, Robot.down, Robot.right, Robot.up)
-        # else:
-        #    self.move = (Robot.left, Robot.up, Robot.right, Robot.down)
-        pass
+    def calibrate_move(self, current_position):
+        if current_position[1] > self.target_position[1]:
+            if current_position[0] > self.target_position[0]:
+                self.move = (Robot.right, Robot.down, Robot.up, Robot.left)
+            elif current_position[0] < self.target_position[0]:
+                self.move = (Robot.left, Robot.down, Robot.up, Robot.right)
+            else:
+                self.move = (Robot.left, Robot.down, Robot.right, Robot.up)
+
+
+        else:
+            if current_position[0] > self.target_position[0]:
+                self.move = (Robot.right, Robot.up, Robot.down, Robot.left)
+            elif current_position[0] < self.target_position[0]:
+                self.move = (Robot.left, Robot.up, Robot.down, Robot.right)
+            else:
+                self.move = (Robot.left, Robot.up, Robot.right, Robot.down)
 
     def bfs(self, start, goal):
         queue = deque([start])
